@@ -103,7 +103,7 @@ class SankakuParser:
     def search(self, tags):
         self.last_search_tags = tags.replace(' ', '+')
     
-        json = self.get_json(f'https://capi-v2.sankakucomplex.com/posts/keyset?{self.search_params}&tags={self.last_search_tags}')
+        json = self.get_json(f'https://sankakuapi.com/v2/posts/keyset?{self.search_params}&tags={self.last_search_tags}')
         self.last_next_id = json['meta']['next']
         
         return self.search_cleaner(json)
@@ -129,7 +129,7 @@ class SankakuParser:
         if self.last_next_id is None:
             return []
 
-        json = self.get_json(f'https://capi-v2.sankakucomplex.com/posts/keyset?{self.search_params}&tags={self.last_search_tags}&next={self.last_next_id}')
+        json = self.get_json(f'https://sankakuapi.com/v2/posts/keyset?{self.search_params}&tags={self.last_search_tags}&next={self.last_next_id}')
         self.last_next_id = json['meta']['next']
 
         return self.search_cleaner(json)
