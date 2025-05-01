@@ -174,12 +174,12 @@ class SankakuParser:
                 'width': media['width'],
                 'height': media['height'],
                 'size': media['file_size'],
-                'tags': self.tags_cleaner(media['tags'])
+                'tags': self.tags_cleaner(media)
             })
 
         return clean_data
 
 
     def tags_cleaner(self, json):
-        clean_data = [o['name_en'] for o in json]
+        clean_data = [o.replace("_", " ") for o in json['tag_names']]
         return clean_data
