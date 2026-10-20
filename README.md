@@ -22,7 +22,7 @@ Sankaku Chan and Idol work anonymously. With a Sankaku account you can also:
 ## Preview
 
 <img src=".github/downloads.png" alt="Download list" />
-<img src=".github/search.png" alt="Search and filters" />
+<img src=".github/search.png" alt="Tag search suggestions" />
 <img src=".github/sign-in.png" alt="Sign-in form" />
 <img src=".github/settings.png" alt="Download settings" />
 
