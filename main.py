@@ -1,6 +1,6 @@
 from pathlib import Path
-from Sankaku.Config import load_config
-from Sankaku.Tui import SankakuApp
+from ArtDownloader.Config import load_config
+from ArtDownloader.Tui import ArtDownloaderApp
 import sys
 
 
@@ -16,7 +16,7 @@ def main() -> int:
         print(f'Cannot read config: {err}', file=sys.stderr)
         return 1
 
-    SankakuApp(config).run()
+    ArtDownloaderApp(config).run()
 
     return 0
 

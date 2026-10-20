@@ -4,7 +4,7 @@
     "pythonVersion": "3.10",
     "typeCheckingMode": "standard",
     "include": [
-        "Sankaku",
+        "ArtDownloader",
         "main.py"
     ],
     "exclude": [

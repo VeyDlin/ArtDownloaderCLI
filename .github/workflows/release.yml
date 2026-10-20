@@ -72,14 +72,20 @@ jobs:
           python-version: '3.12'
 
       - name: Install dependencies
-        run: python -m pip install -r requirements.txt pyinstaller
+        run: python -m pip install -r requirements-dev.txt pyinstaller
+
+      - name: Test
+        run: python -m unittest discover -s tests
+
+      - name: Check types
+        run: python -m mypy ArtDownloader main.py
 
       # Textual and Rich import some modules lazily; collect them explicitly.
       - name: Build
         shell: bash
         run: |
-          python -m PyInstaller --noconfirm --onefile --name SankakuParser \
-            --add-data "Sankaku/Tui/App.tcss:Sankaku/Tui" \
+          python -m PyInstaller --noconfirm --onefile --name ArtDownloaderCLI \
+            --add-data "ArtDownloader/Tui/App.tcss:ArtDownloader/Tui" \
             --collect-submodules textual \
             --collect-submodules rich \
             main.py
@@ -89,14 +95,14 @@ jobs:
         shell: bash
         run: |
           mkdir -p out
-          cp dist/SankakuParser.exe "out/SankakuParser-${{ needs.version.outputs.tag }}-windows.exe"
+          cp dist/ArtDownloaderCLI.exe "out/ArtDownloaderCLI-${{ needs.version.outputs.tag }}-windows.exe"
 
       # Both archives keep the executable bit, which a bare download would lose.
       - name: Package (Linux)
         if: matrix.platform == 'linux'
         run: |
           mkdir -p out
-          tar -czf "out/SankakuParser-${{ needs.version.outputs.tag }}-linux.tar.gz" -C dist SankakuParser
+          tar -czf "out/ArtDownloaderCLI-${{ needs.version.outputs.tag }}-linux.tar.gz" -C dist ArtDownloaderCLI
 
       # A zip is what Finder opens natively (and what notarization takes);
       # ditto is Apple's own way to make one that keeps file permissions.
@@ -104,7 +110,7 @@ jobs:
         if: startsWith(matrix.platform, 'macos')
         run: |
           mkdir -p out
-          ditto -c -k --keepParent dist/SankakuParser "out/SankakuParser-${{ needs.version.outputs.tag }}-${{ matrix.platform }}.zip"
+          ditto -c -k --keepParent dist/ArtDownloaderCLI "out/ArtDownloaderCLI-${{ needs.version.outputs.tag }}-${{ matrix.platform }}.zip"
 
       - uses: actions/upload-artifact@v7
         with:
@@ -125,7 +131,7 @@ jobs:
       - name: Source archive
         run: |
           tag="${{ needs.version.outputs.tag }}"
-          git archive --format=zip --prefix="SankakuParser-$tag/" -o "out/SankakuParser-$tag-source.zip" HEAD
+          git archive --format=zip --prefix="ArtDownloaderCLI-$tag/" -o "out/ArtDownloaderCLI-$tag-source.zip" HEAD
 
       # For a manual run gh creates the tag on the built commit.
       - name: Publish

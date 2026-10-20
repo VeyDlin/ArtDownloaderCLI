@@ -11,6 +11,7 @@ rem what break batch files that use Unix line endings.
 rem ---------------------------------------------------------------------------
 setlocal
 pushd "%~dp0"
+echo Starting ArtDownloaderCLI...
 
 set "VENV_PY=.venv\Scripts\python.exe"
 set "FRESH="
@@ -36,6 +37,7 @@ exit /b
 
 set -e
 cd "$(dirname "$0")"
+echo "Starting ArtDownloaderCLI..."
 
 PY=python3
 command -v python3 >/dev/null 2>&1 || PY=python
