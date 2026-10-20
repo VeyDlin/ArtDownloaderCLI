@@ -20,6 +20,13 @@ class ApiCredentials:
     api_key: str
 
 
+@dataclass(frozen=True)
+class UserApiCredentials:
+    username: str
+    api_key: str
+    user_id: int = 0
+
+
 class CredentialStore:
     """Persists the session between runs: tokens plus the user name.
 
@@ -79,6 +86,28 @@ class CredentialStore:
             self.write_all(data)
 
 
+    def load_user_key(self, site: str) -> UserApiCredentials | None:
+        entry: Any = self.read_all().get(site)
+        if not isinstance(entry, dict):
+            return None
+        username: Any = entry.get('username')
+        api_key: Any = entry.get('api_key')
+        user_id: Any = entry.get('user_id')
+        if not isinstance(username, str) or not username or not isinstance(api_key, str) or not api_key:
+            return None
+        return UserApiCredentials(
+            username, api_key,
+            user_id if isinstance(user_id, int) and not isinstance(user_id, bool) and user_id > 0 else 0
+        )
+
+
+    def save_user_key(self, site: str, credentials: UserApiCredentials) -> None:
+        with self.lock:
+            data: dict[str, Any] = self.read_all()
+            data[site] = asdict(credentials)
+            self.write_all(data)
+
+
     def clear(self, site: str) -> None:
         """Drops the site's tokens, keeping the remembered user name."""
         with self.lock:
@@ -87,7 +116,9 @@ class CredentialStore:
             if entry is None:
                 return
 
-            field: str = 'user_id' if isinstance(entry, dict) and 'user_id' in entry else 'username'
+            field: str = (
+                'user_id' if isinstance(entry, dict) and 'user_id' in entry and 'username' not in entry else 'username'
+            )
             username = entry.get(field) if isinstance(entry, dict) else None
             if isinstance(username, str) and username:
                 data[site] = {field: username}

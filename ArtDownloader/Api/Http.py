@@ -1,6 +1,24 @@
 from threading import Event, Lock, Thread, current_thread
+from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 import requests
 import time
+
+
+MAX_RETRY_DELAY: float = 300.0
+
+
+def retry_delay(header: str | None, attempt: int) -> float:
+    if header is not None:
+        try:
+            return max(0.0, float(int(header)))
+        except ValueError:
+            try:
+                moment: datetime = parsedate_to_datetime(header)
+                return max(0.0, (moment - datetime.now(timezone.utc)).total_seconds())
+            except (ValueError, TypeError, OverflowError):
+                pass
+    return min(2.0 ** attempt, MAX_RETRY_DELAY)
 
 
 class RequestCancelled(Exception):

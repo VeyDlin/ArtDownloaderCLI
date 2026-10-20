@@ -42,7 +42,8 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
 
 
     def compose(self) -> ComposeResult:
-        key_auth: bool = self.definition.auth_kind is AuthKind.API_KEY
+        key_auth: bool = self.definition.auth_kind is not AuthKind.PASSWORD
+        combined_key: bool = self.definition.auth_kind is AuthKind.API_KEY
         with Vertical(id='dialog'):
             with Horizontal(classes='line'):
                 yield Static(f'[b]{site_title(self.api.site)}[/] · sign in', classes='fill')
@@ -58,13 +59,29 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
                         yield Static(f'to {site_title(self.api.site)}.', classes='auth-step-text')
                     with Horizontal(classes='auth-step'):
                         yield Static('2. Open', classes='auth-step-text')
-                        yield Action('account settings', 'accent', id='open-account-settings')
-                    yield Static(
-                        '3. Find [$text-highlight]API Access Credentials[/]. '
-                        'Copy the whole line starting with [$text-highlight]&api_key=[/] '
-                        'and paste it below.',
-                        id='auth-steps'
-                    )
+                        yield Action(
+                            'account settings' if combined_key else 'your profile',
+                            'accent', id='open-account-settings'
+                        )
+                    if combined_key:
+                        yield Static(
+                            '3. Find [$text-highlight]API Access Credentials[/]. '
+                            'Copy the whole line starting with [$text-highlight]&api_key=[/] '
+                            'and paste it below.',
+                            id='auth-steps'
+                        )
+                    else:
+                        yield Static(
+                            '3. Under [$text-highlight]API Key[/], click [$text-highlight]View[/], '
+                            'then [$text-highlight]Add[/] at the top.\n'
+                            '4. Leave [$text-highlight]Name[/] and [$text-highlight]IP Addresses[/] empty. '
+                            'Clear any [$text-highlight]Permissions[/] selection with Ctrl+click.\n'
+                            '5. Click [$text-highlight]Create[/]. Copy the [$text-highlight]Key[/] column '
+                            'into [$text-highlight]API key[/] below. '
+                            'For [$text-highlight]login[/], use your profile name.',
+                            id='auth-steps'
+                        )
+            if combined_key:
                 yield CredentialsInput(
                     id='credentials',
                     placeholder='Paste the copied text here',
@@ -76,16 +93,21 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
                     yield Label('login', classes='caption')
                     yield Input(
                         value=self.api.remembered_identifier(),
-                        placeholder='username or e-mail', id='username', compact=True
+                        placeholder='username' if key_auth else 'username or e-mail',
+                        id='username', compact=True
                     )
                 with Horizontal(classes='field'):
-                    yield Label('password', classes='caption')
-                    yield Input(placeholder='password', password=True, id='password', compact=True)
+                    yield Label('API key' if key_auth else 'password', classes='caption')
+                    yield Input(
+                        placeholder='API key' if key_auth else 'password',
+                        password=True, id='password', compact=True
+                    )
                     yield Action('show', id='reveal')
-                yield Static(
-                    'The password is only exchanged for a session token; it is never saved.',
-                    id='auth-hint'
-                )
+                if not key_auth:
+                    yield Static(
+                        'The password is only exchanged for a session token; it is never saved.',
+                        id='auth-hint'
+                    )
 
             with BottomAlignedRow(classes='line actions'):
                 yield Static('', id='auth-error', classes='fill message')

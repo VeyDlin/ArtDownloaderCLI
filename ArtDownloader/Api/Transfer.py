@@ -1,10 +1,35 @@
 from collections.abc import Callable
 from pathlib import Path
 from tempfile import NamedTemporaryFile
+from ArtDownloader.Api.Errors import ApiError
 import requests
 
 
 CHUNK_SIZE: int = 1 << 16
+
+
+def download_media(
+    session: requests.Session,
+    url: str,
+    destination: Path,
+    should_abort: Callable[[], bool] | None = None,
+    on_progress: Callable[[int, int | None], None] | None = None
+) -> bool:
+    """Fetch media through a session without API credentials."""
+    if should_abort is not None and should_abort():
+        return False
+    try:
+        response: requests.Response = session.get(url, stream=True, timeout=30)
+        with response:
+            if response.headers.get('cf-mitigated') == 'challenge':
+                raise ApiError('Cloudflare blocked the media request; try again later')
+            if response.status_code >= 400:
+                raise ApiError(f'The media server returned HTTP {response.status_code}')
+            if 'text/html' in response.headers.get('Content-Type', '').lower():
+                raise ApiError('The media server returned a web page instead of a file')
+            return save_response(response, destination, should_abort, on_progress)
+    except requests.RequestException:
+        raise ApiError('The media transfer failed; retry the download') from None
 
 
 def save_response(
