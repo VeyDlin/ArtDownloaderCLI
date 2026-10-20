@@ -1,22 +1,25 @@
 from dataclasses import dataclass
 from enum import Enum
-from ArtDownloader.Api.Filters import ANONYMOUS_OPERATOR_LIMIT, Sort
+from ArtDownloader.Api.Filters import ANONYMOUS_OPERATOR_LIMIT, STANDARD_RATINGS, Rating, Sort
 
 
 class Site(Enum):
     CHAN = 'chan'
     IDOL = 'idol'
     RULE34 = 'rule34'
+    DANBOORU = 'danbooru'
 
 
 class AuthKind(Enum):
     PASSWORD = 'password'
     API_KEY = 'api-key'
+    USER_API_KEY = 'user-api-key'
 
 
 @dataclass(frozen=True)
 class FilterSupport:
     sorts: tuple[Sort, ...]
+    ratings: tuple[Rating, ...] = STANDARD_RATINGS
     dates: bool = False
     stars: bool = False
     resolution: bool = False
@@ -61,6 +64,19 @@ RULE34_FILTERS: FilterSupport = FilterSupport(
     dimensions=True,
     user_fields=('uploaded-by',)
 )
+DANBOORU_FILTERS: FilterSupport = FilterSupport(
+    sorts=(Sort.NEWEST, Sort.OLDEST, Sort.POPULARITY, Sort.UPDATED),
+    ratings=(Rating.GENERAL, Rating.SENSITIVE, Rating.QUESTIONABLE, Rating.EXPLICIT),
+    dates=True,
+    resolution=True,
+    file_type=True,
+    duration=True,
+    score=True,
+    dimensions=True,
+    user_fields=('liked-by', 'uploaded-by'),
+    user_suggestions=True,
+    my_likes=True
+)
 SITE_DEFINITIONS: dict[Site, SiteDefinition] = {
     Site.CHAN: SiteDefinition('Chan', AuthKind.PASSWORD, SANKAKU_FILTERS),
     Site.IDOL: SiteDefinition('Idol', AuthKind.PASSWORD, SANKAKU_FILTERS),
@@ -71,6 +87,13 @@ SITE_DEFINITIONS: dict[Site, SiteDefinition] = {
         requires_auth=True,
         account_url='https://rule34.xxx/index.php?page=account&s=options',
         login_url='https://rule34.xxx/index.php?code=00&page=account&s=login'
+    ),
+    Site.DANBOORU: SiteDefinition(
+        'Danbooru',
+        AuthKind.USER_API_KEY,
+        DANBOORU_FILTERS,
+        account_url='https://danbooru.donmai.us/profile',
+        login_url='https://danbooru.donmai.us/session/new'
     )
 }
 

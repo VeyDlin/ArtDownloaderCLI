@@ -13,7 +13,8 @@ class ThemeSettings:
 SOURCE_STYLES: dict[Site, ThemeSettings] = {
     Site.CHAN: ThemeSettings(accent=Palette.ACCENT),
     Site.IDOL: ThemeSettings(accent=Palette.ACCENT),
-    Site.RULE34: ThemeSettings(accent=Palette.SUCCESS)
+    Site.RULE34: ThemeSettings(accent=Palette.SUCCESS),
+    Site.DANBOORU: ThemeSettings(accent='#6ea8e0', highlight='#c8bd91')
 }
 
 

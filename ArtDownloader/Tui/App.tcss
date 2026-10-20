@@ -143,6 +143,17 @@ AccountMenu {
     color: $source-rule34;
 }
 
+#tab-danbooru {
+    color: $source-danbooru;
+}
+
+#tab-danbooru.-current,
+#tab-danbooru:hover,
+#tab-danbooru:focus {
+    background: $source-danbooru;
+    color: $background;
+}
+
 #tab-chan.-current,
 #tab-chan:hover,
 #tab-chan:focus {
@@ -415,7 +426,7 @@ AuthScreen {
 
 #auth-guide {
     height: auto;
-    margin-top: 1;
+    margin: 1 0;
     padding: 0 1;
     color: $foreground;
 }
@@ -435,7 +446,7 @@ AuthScreen {
 
 #credentials {
     height: 4;
-    margin: 1 1 0 1;
+    margin: 0 1;
     padding: 0 1;
     border: none;
     background: $foreground 7%;

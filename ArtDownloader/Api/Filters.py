@@ -1,6 +1,7 @@
 from dataclasses import dataclass, replace
 from datetime import date, datetime, time, timedelta, timezone
 from enum import Enum
+from collections.abc import Sequence
 
 
 # Every tag below was verified against the live API (chan and idol), and matches
@@ -18,11 +19,15 @@ class Sort(Enum):
 
 
 class Rating(Enum):
-    """Age ratings; the site shows them as G, R15+ and R18+."""
+    """Content categories; API codes are translated by each source."""
 
     GENERAL = 's'
     QUESTIONABLE = 'q'
     EXPLICIT = 'e'
+    SENSITIVE = 'sensitive'
+
+
+STANDARD_RATINGS: tuple[Rating, ...] = (Rating.GENERAL, Rating.QUESTIONABLE, Rating.EXPLICIT)
 
 
 class DateRange(Enum):
@@ -146,16 +151,16 @@ class SearchFilters:
         return tags
 
 
-    def allowed_ratings(self) -> list[Rating]:
+    def allowed_ratings(self, available: Sequence[Rating] = STANDARD_RATINGS) -> list[Rating]:
         if self.only_ratings:
-            return [rating for rating in Rating if rating in self.only_ratings]
+            return [rating for rating in available if rating in self.only_ratings]
 
-        return [rating for rating in Rating if rating not in self.excluded_ratings]
+        return [rating for rating in available if rating not in self.excluded_ratings]
 
 
-    def left_out_rating(self) -> Rating | None:
+    def left_out_rating(self, available: Sequence[Rating] = STANDARD_RATINGS) -> Rating | None:
         """The one rating left out, when exactly one is."""
-        left_out = [rating for rating in Rating if rating not in self.allowed_ratings()]
+        left_out = [rating for rating in available if rating not in self.allowed_ratings(available)]
 
         return left_out[0] if len(left_out) == 1 else None
 

@@ -1,15 +1,13 @@
 from collections.abc import Callable
-from datetime import datetime, timezone
-from email.utils import parsedate_to_datetime
 from pathlib import Path
 from threading import Event
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 from ArtDownloader.Api.Errors import ApiError, AuthError, WebsiteSignInRequired
-from ArtDownloader.Api.Http import RateLimiter, SessionPool
+from ArtDownloader.Api.Http import MAX_RETRY_DELAY, RateLimiter, SessionPool, retry_delay
 from ArtDownloader.Api.Models import MediaItem, SessionCheck, SessionStatus, TagSuggestion, TypedTag, text_of
 from ArtDownloader.Api.Sites import Site
-from ArtDownloader.Api.Transfer import save_response
+from ArtDownloader.Api.Transfer import download_media
 from ArtDownloader.Auth.CredentialStore import ApiCredentials, CredentialStore
 import requests
 
@@ -20,7 +18,6 @@ AUTOCOMPLETE_URL: str = 'https://api.rule34.xxx/autocomplete.php'
 REQUEST_INTERVAL: float = 1.1
 REQUEST_TIMEOUT: int = 30
 MAX_RETRIES: int = 3
-MAX_RETRY_DELAY: float = 300.0
 TAG_CATEGORIES: dict[int, str] = {
     0: 'general', 1: 'artist', 3: 'copyright', 4: 'character', 5: 'meta'
 }
@@ -209,25 +206,7 @@ class Rule34Api:
         should_abort: Callable[[], bool] | None = None,
         on_progress: Callable[[int, int | None], None] | None = None
     ) -> bool:
-        if should_abort is not None and should_abort():
-            return False
-        try:
-            # Credentials are request parameters of request_json only. The
-            # media request cannot inherit API params, headers or redirects.
-            response: requests.Response = self.sessions.current().get(url, stream=True, timeout=REQUEST_TIMEOUT)
-            if response.headers.get('cf-mitigated') == 'challenge':
-                response.close()
-                raise ApiError('Cloudflare blocked the media request; try again later')
-            if response.status_code >= 400:
-                status: int = response.status_code
-                response.close()
-                raise ApiError(f'The media server returned HTTP {status}')
-            if 'text/html' in response.headers.get('Content-Type', '').lower():
-                response.close()
-                raise ApiError('The media server returned a web page instead of a file')
-            return save_response(response, destination, should_abort, on_progress)
-        except requests.RequestException:
-            raise ApiError('The media transfer failed; retry the download') from None
+        return download_media(self.sessions.current(), url, destination, should_abort, on_progress)
 
 
     def request_json(
@@ -325,19 +304,6 @@ def credentials_from_input(identifier: str, secret: str) -> ApiCredentials:
     if not api_key or any(character.isspace() for character in api_key):
         raise AuthError('Paste the API key from API Access Credentials')
     return ApiCredentials(user_id, api_key)
-
-
-def retry_delay(header: str | None, attempt: int) -> float:
-    if header is not None:
-        try:
-            return max(0.0, float(int(header)))
-        except ValueError:
-            try:
-                moment: datetime = parsedate_to_datetime(header)
-                return max(0.0, (moment - datetime.now(timezone.utc)).total_seconds())
-            except (ValueError, TypeError, OverflowError):
-                pass
-    return min(2.0 ** attempt, MAX_RETRY_DELAY)
 
 
 def integer_of(value: Any) -> int:

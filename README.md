@@ -1,6 +1,6 @@
 # ArtDownloaderCLI
 
-A terminal app for searching and downloading art from **Sankaku Chan**, **Sankaku Idol** and **Rule34**. Every image can be saved with its tags as captions for a dataset.
+A terminal app for searching and downloading art from **Sankaku Chan**, **Sankaku Idol**, **Rule34** and **Danbooru**. Every image can be saved with its tags as captions for a dataset.
 
 Chan and Idol work anonymously. With a Sankaku account you can also:
 - Download your likes
@@ -11,23 +11,26 @@ Chan and Idol work anonymously. With a Sankaku account you can also:
 
 **Rule34 requires sign-in before downloading.** The sign-in form guides you through copying your account's access credentials. See [Connecting Rule34](#connecting-rule34).
 
+**Danbooru supports anonymous searches and optional username/API-key sign-in.**
+Account permissions and search limits still apply. See [Connecting Danbooru](#connecting-danbooru).
+
 ## Features
 - **Independent sources** – Each site has its own tab, account, settings and download folder; several sites can download at the same time
-- **Connection guide** – Optional password sign-in for Sankaku; guided API-key setup for Rule34. Passwords are never saved
+- **Connection guide** – Optional password sign-in for Sankaku; guided API-key setup for Rule34 and Danbooru. Passwords are never saved
 - **Source-specific filters** – Each tab exposes the filters supported by its API; see the table below
 - **Tag saving** – `.txt` captions and/or `.json` metadata, with tag categories when the source provides them
 - **Resume** – Files you already have are skipped, so an interrupted search can be continued
 - **Parallel Downloads** – Up to 4 files at once, with adjustable pauses between requests (in **settings**)
-- **Terminal title** – ArtDownloaderCLI and the selected source, with an ASCII animation while downloading and the state of background downloads. The previous title is restored on supported terminals
+- **Terminal title** – ArtDownloaderCLI and the selected source, with the same activity animation as the download status and the state of background downloads. The previous title is restored on supported terminals
 
-| Filter | Chan / Idol | Rule34 |
-| --- | --- | --- |
-| Sort | Newest, popular, quality, random, recently liked/voted | Newest, oldest, score, updated, random |
-| Content rating | G, R15+, R18+; include or exclude | Safe, questionable, explicit; include or exclude |
-| Minimum rating | Stars | Vote score |
-| Dimensions | Resolution presets | Minimum width and height in pixels |
-| Date, file type, video duration | Available | Not exposed as controls |
-| User filters | Liked, uploaded, voted by; my likes | Uploaded by |
+| Filter | Chan / Idol | Rule34 | Danbooru |
+| --- | --- | --- | --- |
+| Sort | Newest, popular, quality, random, recently liked/voted | Newest, oldest, score, updated, random | Newest, oldest, score, updated |
+| Content rating | G, R15+, R18+ | Safe, questionable, explicit | General, sensitive, questionable, explicit |
+| Minimum rating | Stars | Vote score | Vote score |
+| Dimensions | Resolution presets | Minimum width and height | Resolution presets, minimum width and height |
+| Date, file type, video duration | Available | Not exposed as controls | Available |
+| User filters | Liked, uploaded, voted by; my likes | Uploaded by | Liked and uploaded by; my likes |
 
 Search tags are passed through to the selected site. Unsupported structured filters
 are hidden rather than translated into another site's syntax.
@@ -58,12 +61,12 @@ Requires Python 3.10+.
 Run `start.bat` — it is a polyglot script: double-click it on Windows, or run `./start.bat` on Linux and macOS. The first run creates a virtual environment and installs the dependencies, which may take some time.
 
 ## Getting started
-1. Pick **Chan**, **Idol** or **Rule34**. Each tab checks its saved connection on start
-2. Click **sign in** in the top bar. Sankaku also supports anonymous browsing; Rule34 requires a key
+1. Pick **Chan**, **Idol**, **Rule34** or **Danbooru**. Each tab checks its saved connection on start
+2. Click **sign in** in the top bar. Sankaku and Danbooru also support anonymous browsing; Rule34 requires a key
 3. Enter a search query (matching tags drop down as you type), optionally set **filters**, and press **▶ start**
 4. Enjoy your downloads!
 
-Each search goes to its own folder under `data/chan/`, `data/idol/` or `data/rule34/`
+Each search goes to its own folder under `data/chan/`, `data/idol/`, `data/rule34/` or `data/danbooru/`
 by default, named after the search unless you type another name in **folder**.
 **limit** caps the number of new media files; leave it empty to download everything
 the source makes available. **split by format** sorts files into subfolders by
@@ -97,6 +100,38 @@ color when another page is active.
 Credentials are stored locally in `.config/session.json`, separately from settings.
 Do not share that file. **sign out** removes the saved key and remembers only
 the User ID. A temporary connection error keeps the key and offers **retry check**.
+
+## Connecting Danbooru
+
+1. Select **Danbooru** and click **sign in**.
+2. Use the form's website **sign in** link if needed, then open **your profile**.
+3. Under **API Key**, click **View**, then **Add** at the top of the API Keys page.
+4. **Name** is optional; leave it empty or use `ArtDownloaderCLI`.
+   Leave **IP Addresses** empty. Clear any **Permissions** selection with Ctrl+click
+   (Command+click on macOS). With no selection, the key can access all API endpoints.
+5. Click **Create**. Copy the value in the table's **Key** column into **API key**
+   in the app. Enter your profile username in **login**, then click **sign in**.
+
+If you already have a suitable key, copy it from the **Key** column instead of
+creating another. A key limited to `admin/users:update` cannot read posts or your
+profile. Use **Edit** to change its permissions. For a key restricted to this
+app's read requests, allow `posts:index`, `tags:index`, `users:index` and
+`users:profile`.
+
+If Danbooru displays an account restriction notice, follow **Verify your account now**
+on the website. Creating an API key does not remove account restrictions.
+The app retains saved keys on access or connection errors and removes them when
+the server explicitly rejects authentication.
+
+Danbooru uses a blue accent with muted gold instructional highlights. Its
+autocomplete includes post counts, and **my likes** searches the signed-in user's
+favorites. The API is paced automatically; ordinary newest/oldest searches use
+post-ID cursors, while other sort orders remain subject to numbered-page limits.
+The app never substitutes a preview for an unavailable original file.
+
+API behavior and query syntax:
+[official API documentation](https://danbooru.donmai.us/wiki_pages/help:api),
+[search reference](https://danbooru.donmai.us/wiki_pages/help:cheatsheet).
 
 Rule34 API requests are paced automatically across all workers. On a rate-limit
 response, the app waits according to the server's `Retry-After` value when possible

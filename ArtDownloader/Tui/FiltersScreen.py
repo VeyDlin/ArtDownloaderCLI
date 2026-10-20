@@ -100,6 +100,11 @@ ChoiceValue = TypeVar('ChoiceValue')
 
 
 def rating_labels(site: Site) -> dict[Rating, str]:
+    if site is Site.DANBOORU:
+        return {
+            Rating.GENERAL: 'general', Rating.SENSITIVE: 'sensitive',
+            Rating.QUESTIONABLE: 'questionable', Rating.EXPLICIT: 'explicit'
+        }
     if site is Site.RULE34:
         return {
             Rating.GENERAL: 'safe',
@@ -113,7 +118,7 @@ def sort_labels(site: Site) -> dict[Sort, str]:
     labels: dict[Sort, str] = {
         value: SORT_LABELS[value] for value in definition_for(site).filters.sorts
     }
-    if site is Site.RULE34:
+    if site in (Site.RULE34, Site.DANBOORU):
         labels[Sort.POPULARITY] = 'score'
     return labels
 
@@ -125,12 +130,13 @@ def summarize(filters: SearchFilters, site: Site = Site.CHAN) -> list[str]:
         parts.append(sort_labels(site)[filters.sort])
 
     ratings: dict[Rating, str] = rating_labels(site)
-    allowed = filters.allowed_ratings()
-    left_out = filters.left_out_rating()
+    available: tuple[Rating, ...] = definition_for(site).filters.ratings
+    allowed = filters.allowed_ratings(available)
+    excluded: list[Rating] = [rating for rating in available if rating not in allowed]
     if len(allowed) == 1:
         parts.append(f'{ratings[allowed[0]]} only')
-    elif left_out is not None:
-        parts.append(f'no {ratings[left_out]}')
+    elif excluded:
+        parts.append(f'no {", ".join(ratings[rating] for rating in excluded)}')
 
     if filters.date_range is DateRange.CUSTOM and filters.date_from is not None:
         parts.append(f'{filters.date_from:%Y-%m-%d} – {(filters.date_to or date.today()):%Y-%m-%d}')
@@ -435,7 +441,7 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
             uploaded_by=self.query_one('#uploaded-by', Input).value.strip(),
             voted_by=self.query_one('#voted-by', Input).value.strip()
         )
-        if not filters.allowed_ratings():
+        if not filters.allowed_ratings(self.support.ratings):
             raise ValueError('every age rating is excluded')
         build_query(self.api.site, '', filters)
 
