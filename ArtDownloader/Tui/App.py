@@ -34,9 +34,10 @@ class ArtDownloaderApp(App[None]):
         super().__init__(ansi_color=True)
         self.config: AppConfig = config
         self.token_store: CredentialStore = CredentialStore(config.session_path)
+        self.selected_site: Site = next(iter(Site))
         for theme in SOURCE_THEMES.values():
             self.register_theme(theme)
-        self.theme = SOURCE_THEMES[next(iter(Site))].name
+        self.theme = SOURCE_THEMES[self.selected_site].name
         self.account_spinner: Timer | None = None
         self.account_frame: int = 0
         self.terminal_window: TerminalWindow | None = None
@@ -48,7 +49,7 @@ class ArtDownloaderApp(App[None]):
         # A hand-built top bar: site tabs, account status and settings are all
         # plain focusable actions on one row, so the arrows walk along it and
         # Enter/Space picks the focused one (arrows never switch the page).
-        first = next(iter(Site))
+        first = self.selected_site
         with Horizontal(id='topbar'):
             for site in Site:
                 tab = SiteTab(site_title(site), id=f'{TAB_PREFIX}{site.value}', classes='site-tab')
@@ -92,7 +93,7 @@ class ArtDownloaderApp(App[None]):
             )
             for pane in self.query(SitePane) if pane.running
         ]
-        self.title_animation.update(states)
+        self.title_animation.update(states, selected_source=site_title(self.selected_site))
 
 
     def pane_for(self, site: Site) -> SitePane:
@@ -100,19 +101,18 @@ class ArtDownloaderApp(App[None]):
 
 
     def active_pane(self) -> SitePane:
-        current = self.query_one('#panes', ContentSwitcher).current or ''
-        site_value = current.removeprefix(PANE_PREFIX)
-
-        return self.query_one(f'#{PANE_PREFIX}{site_value}', SitePane)
+        return self.pane_for(self.selected_site)
 
 
     def show_site(self, site: Site) -> None:
+        self.selected_site = site
         self.theme = SOURCE_THEMES[site].name
         self.query_one('#panes', ContentSwitcher).current = f'{PANE_PREFIX}{site.value}'
         for tab in self.query(SiteTab):
             tab.current = tab.id == f'{TAB_PREFIX}{site.value}'
 
         self.refresh_account()
+        self.update_terminal_title()
 
 
     def on_action_pressed(self, event: Action.Pressed) -> None:

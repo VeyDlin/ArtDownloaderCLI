@@ -48,3 +48,19 @@ class WrappedRow(Horizontal):
     @property
     def layout(self) -> WrappedRowLayout:
         return WrappedRowLayout()
+
+
+class BottomAlignedRow(Horizontal):
+    def process_layout(self, placements: list[WidgetPlacement]) -> list[WidgetPlacement]:
+        bottom: int = max(
+            (placement.region.bottom + placement.margin.bottom for placement in placements),
+            default=0
+        )
+        return [
+            WidgetPlacement(
+                placement.region.translate((0, bottom - placement.margin.bottom - placement.region.bottom)),
+                placement.offset, placement.margin, placement.widget,
+                placement.order, placement.fixed, placement.overlay, placement.absolute
+            )
+            for placement in placements
+        ]

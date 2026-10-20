@@ -85,6 +85,10 @@ class Rule34Api:
         self.credentials = None
 
 
+    def validate_login(self, identifier: str, secret: str) -> None:
+        credentials_from_input(identifier, secret)
+
+
     def restore_session(self) -> SessionCheck:
         if self.credential_store is None:
             return SessionCheck(SessionStatus.NONE)
@@ -263,13 +267,26 @@ class Rule34Api:
                     raise AuthError('Rule34 rejected the User ID or API key; check both in account settings')
                 if response.status_code != 200:
                     raise ApiError(f'Rule34 returned HTTP {response.status_code}; try again later')
+                # Zero-result JSON post searches return an empty body instead of [].
+                if (
+                    not response.content
+                    and response.headers.get('Content-Type', '').split(';')[0].strip().lower() == 'application/json'
+                    and url == API_URL
+                    and params.get('page') == 'dapi'
+                    and params.get('s') == 'post'
+                    and params.get('q') == 'index'
+                    and params.get('json') == '1'
+                ):
+                    return []
                 try:
                     data: Any = response.json()
                 except ValueError:
                     text: str = response.text.lower()
                     if any(message in text for message in AUTH_FAILURES):
                         raise AuthError('Rule34 rejected the User ID or API key') from None
-                    raise ApiError('Rule34 returned a web page or invalid data instead of JSON') from None
+                    if not response.content:
+                        raise ApiError('Rule34 returned an empty response; try again later') from None
+                    raise ApiError('Rule34 returned unreadable data; try again later') from None
                 if isinstance(data, str) and any(message in data.lower() for message in AUTH_FAILURES):
                     raise AuthError('Rule34 rejected the User ID or API key')
                 if isinstance(data, dict) and data.get('success') is False:

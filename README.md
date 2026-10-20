@@ -18,7 +18,7 @@ Chan and Idol work anonymously. With a Sankaku account you can also:
 - **Tag saving** – `.txt` captions and/or `.json` metadata, with tag categories when the source provides them
 - **Resume** – Files you already have are skipped, so an interrupted search can be continued
 - **Parallel Downloads** – Up to 4 files at once, with adjustable pauses between requests (in **settings**)
-- **Terminal title** – ArtDownloaderCLI with an ASCII animation while downloading, plus the state of active and background tabs. The previous title is restored on supported terminals
+- **Terminal title** – ArtDownloaderCLI and the selected source, with an ASCII animation while downloading and the state of background downloads. The previous title is restored on supported terminals
 
 | Filter | Chan / Idol | Rule34 |
 | --- | --- | --- |
@@ -79,7 +79,11 @@ It is different from your password.
    Otherwise, use the form's **sign in** link and finish signing in on the website.
 3. Click **account settings** in the form. Find **API Access Credentials**.
 4. Copy the entire line beginning with `&api_key=` into the application's text
-   box, then click **continue**. There is no need to split the text into fields.
+   box, then click **sign in**. There is no need to split the text into fields.
+
+Field names and separators are highlighted without changing the copied text.
+The form checks credential syntax as you edit and shows errors below the input.
+Sign-in buttons remain disabled until the required fields contain usable input.
 
 If the copied line belongs to a guest session, the form directs you to sign in
 on the website and reopen settings. If your account has no key, the error
@@ -133,8 +137,8 @@ python -m mypy ArtDownloader main.py
 ```
 
 Tests use temporary settings and simulated HTTP responses; they do not read your
-saved credentials or download live content. Authenticated API access still needs
-verification with your own key.
+saved credentials or download live content. A separate live sign-in check
+confirmed Rule34's empty JSON response for a search with no results.
 
 The [project tree](docs/project-structure.md) describes the modules.
 The [source design](docs/rule34-design.md) records the source contract, connection

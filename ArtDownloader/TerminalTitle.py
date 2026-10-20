@@ -33,18 +33,26 @@ class TerminalTitle:
         self.last_update: float = float('-inf')
         self.last_title: str = ''
         self.last_states: tuple[DownloadState, ...] = ()
+        self.last_source: str = ''
         self.frame: int = 0
 
 
-    def update(self, states: Sequence[DownloadState], now: float | None = None) -> None:
+    def update(
+        self,
+        states: Sequence[DownloadState],
+        now: float | None = None,
+        selected_source: str = ''
+    ) -> None:
         moment: float = time.monotonic() if now is None else now
         current: tuple[DownloadState, ...] = tuple(states)
-        changed: bool = current != self.last_states
+        changed: bool = current != self.last_states or selected_source != self.last_source
         if not changed and moment - self.last_update < self.interval:
             return
         self.last_update = moment
         self.last_states = current
-        title: str = APP_NAME
+        self.last_source = selected_source
+        base_title: str = f'{APP_NAME} | {selected_source}' if selected_source else APP_NAME
+        title: str = base_title
         if current:
             active: bool = any(not state.paused and not state.stopping for state in current)
             parts: list[str] = []
@@ -52,7 +60,7 @@ class TerminalTitle:
                 status: str = 'stopping' if state.stopping else 'paused' if state.paused else 'downloading'
                 parts.append(f'{state.source}: {status}')
             prefix: str = f'{ANIMATION_FRAMES[self.frame % len(ANIMATION_FRAMES)]} ' if active else ''
-            title = f'{prefix}{APP_NAME} | {"; ".join(parts)} | {sum(state.saved for state in current)} saved'
+            title = f'{prefix}{base_title} | {"; ".join(parts)} | {sum(state.saved for state in current)} saved'
             if active:
                 self.frame += 1
         else:

@@ -85,6 +85,7 @@ class SankakuApi:
 
     def login(self, identifier: str, secret: str) -> str:
         """Exchanges credentials for tokens. Returns the authenticated user name."""
+        self.validate_login(identifier, secret)
         try:
             data = self.request_json(
                 'POST',
@@ -113,6 +114,11 @@ class SankakuApi:
         self.persist_tokens()
 
         return self.tokens.username
+
+
+    def validate_login(self, identifier: str, secret: str) -> None:
+        if not identifier.strip() or not secret:
+            raise AuthError('Enter both login and password')
 
 
     def logout(self) -> None:

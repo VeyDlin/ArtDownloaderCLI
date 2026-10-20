@@ -143,18 +143,21 @@ AccountMenu {
     color: $source-rule34;
 }
 
+#tab-chan.-current,
 #tab-chan:hover,
 #tab-chan:focus {
     background: $source-chan;
     color: $background;
 }
 
+#tab-idol.-current,
 #tab-idol:hover,
 #tab-idol:focus {
     background: $source-idol;
     color: $background;
 }
 
+#tab-rule34.-current,
 #tab-rule34:hover,
 #tab-rule34:focus {
     background: $source-rule34;
@@ -410,10 +413,15 @@ AuthScreen {
     color: $text-muted;
 }
 
-#auth-settings-step,
+#auth-guide {
+    height: auto;
+    margin-top: 1;
+    padding: 0 1;
+    color: $foreground;
+}
+
 .auth-step {
     height: 1;
-    padding: 0 1;
 }
 
 .auth-step-text {
@@ -423,7 +431,6 @@ AuthScreen {
 
 #auth-steps {
     height: auto;
-    padding: 0 1;
 }
 
 #credentials {
