@@ -77,15 +77,14 @@ class TerminalWindow:
         self.enabled: bool = enabled and self.stream is not None and self.stream.isatty()
         self.original_title: str = ''
         self.started: bool = False
-        self.windows: bool = sys.platform == 'win32'
-        if not self.windows and os.environ.get('TERM') in (None, '', 'dumb'):
+        if sys.platform != 'win32' and os.environ.get('TERM') in (None, '', 'dumb'):
             self.enabled = False
 
 
     def start(self) -> None:
         if not self.enabled or self.started or self.stream is None:
             return
-        if self.windows:
+        if sys.platform == 'win32':
             ctypes.windll.kernel32.SetConsoleTitleW.argtypes = [ctypes.c_wchar_p]
             ctypes.windll.kernel32.GetConsoleTitleW.argtypes = [ctypes.c_wchar_p, ctypes.c_uint]
             buffer = ctypes.create_unicode_buffer(32768)
@@ -102,7 +101,7 @@ class TerminalWindow:
             return
         self.start()
         safe: str = ''.join(character for character in title if character.isprintable())
-        if self.windows:
+        if sys.platform == 'win32':
             ctypes.windll.kernel32.SetConsoleTitleW(safe)
         else:
             self.stream.write(f'\x1b]0;{safe}\x07')
@@ -112,7 +111,7 @@ class TerminalWindow:
     def close(self) -> None:
         if not self.enabled or not self.started or self.stream is None:
             return
-        if self.windows:
+        if sys.platform == 'win32':
             ctypes.windll.kernel32.SetConsoleTitleW(self.original_title)
         else:
             self.stream.write('\x1b[23;0t')
