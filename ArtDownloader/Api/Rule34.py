@@ -182,7 +182,7 @@ class Rule34Api:
                 continue
             name: Any = row.get('value') or row.get('name')
             if isinstance(name, str) and name:
-                suggestions.append(TagSuggestion(name, integer_of(row.get('post_count'))))
+                suggestions.append(TagSuggestion(name))
         return suggestions
 
 

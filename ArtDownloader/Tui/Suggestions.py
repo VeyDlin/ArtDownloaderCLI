@@ -1,8 +1,12 @@
+from collections.abc import Sequence
 from pathlib import Path
 from textual.binding import Binding
 from textual.widgets import Input, OptionList
 from textual.widgets.option_list import Option
+from textual.visual import VisualType
 from rich.markup import escape
+from rich.table import Table
+from rich.text import Text
 from ArtDownloader.Api.Models import TagSuggestion
 
 
@@ -130,14 +134,14 @@ class SuggestionMenu(OptionList):
         return self.display and self.option_count > 0
 
 
-    def show_rows(self, rows: list[tuple[str, str]]) -> None:
-        """Shows (value, markup) rows; an empty list closes the menu."""
+    def show_rows(self, rows: Sequence[tuple[str, VisualType]]) -> None:
+        """Show value/prompt pairs; an empty sequence closes the menu."""
         self.clear_options()
         if not rows:
             self.close()
             return
 
-        self.add_options([Option(markup, id=value) for value, markup in rows])
+        self.add_options([Option(prompt, id=value) for value, prompt in rows])
         self.highlighted = 0
         self.display = True
 
@@ -148,11 +152,18 @@ class SuggestionMenu(OptionList):
             self.close()
             return
 
-        width = max(len(item.name) for item in items)
-        self.show_rows([
-            (item.name, f'{escape(item.name.ljust(width))}   [dim]{format_count(item.post_count)}[/]')
-            for item in items
-        ])
+        rows: list[tuple[str, VisualType]] = []
+        for item in items:
+            name: Text = Text(item.name, no_wrap=True, overflow='ellipsis')
+            if item.post_count is None:
+                rows.append((item.name, name))
+                continue
+            row: Table = Table.grid(padding=(0, 1), expand=True)
+            row.add_column(ratio=1, no_wrap=True, overflow='ellipsis')
+            row.add_column(justify='right', no_wrap=True)
+            row.add_row(name, Text(format_count(item.post_count), style='dim'))
+            rows.append((item.name, row))
+        self.show_rows(rows)
 
 
     def show_folders(self, values: list[str]) -> None:

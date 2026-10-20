@@ -1,6 +1,7 @@
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import TextIO
+from ArtDownloader.Animation import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS
 import ctypes
 import os
 import sys
@@ -8,8 +9,6 @@ import time
 
 
 APP_NAME: str = 'ArtDownloaderCLI'
-ANIMATION_FRAMES: tuple[str, ...] = ('.  ', '.. ', '...')
-UPDATE_INTERVAL: float = 0.4
 
 
 @dataclass(frozen=True)
@@ -26,7 +25,7 @@ class TerminalTitle:
     def __init__(
         self,
         writer: Callable[[str], None],
-        interval: float = UPDATE_INTERVAL
+        interval: float = SPINNER_INTERVAL_SECONDS
     ) -> None:
         self.writer: Callable[[str], None] = writer
         self.interval: float = interval
@@ -59,7 +58,7 @@ class TerminalTitle:
             for state in current:
                 status: str = 'stopping' if state.stopping else 'paused' if state.paused else 'downloading'
                 parts.append(f'{state.source}: {status}')
-            prefix: str = f'{ANIMATION_FRAMES[self.frame % len(ANIMATION_FRAMES)]} ' if active else ''
+            prefix: str = f'{SPINNER_FRAMES[self.frame % len(SPINNER_FRAMES)]} ' if active else ''
             title = f'{prefix}{base_title} | {"; ".join(parts)} | {sum(state.saved for state in current)} saved'
             if active:
                 self.frame += 1

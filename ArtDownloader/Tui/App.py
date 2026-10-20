@@ -7,7 +7,8 @@ from textual.widgets import ContentSwitcher, Static
 from ArtDownloader.Api.Sites import Site
 from ArtDownloader.Auth.CredentialStore import CredentialStore
 from ArtDownloader.Config import AppConfig
-from ArtDownloader.Tui.SitePane import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS, AccountView, SitePane
+from ArtDownloader.Animation import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS
+from ArtDownloader.Tui.SitePane import AccountView, SitePane
 from ArtDownloader.Tui.Themes import SOURCE_THEMES
 from ArtDownloader.Tui.Navigation import ARROW_BINDINGS, move_focus
 from ArtDownloader.Tui.SettingsScreen import SettingsScreen

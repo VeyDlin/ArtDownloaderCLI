@@ -81,7 +81,7 @@ class MediaItem:
 @dataclass
 class TagSuggestion:
     name: str
-    post_count: int
+    post_count: int | None = None
 
     @staticmethod
     def from_row(row: dict[str, Any]) -> 'TagSuggestion | None':
@@ -93,7 +93,7 @@ class TagSuggestion:
 
         return TagSuggestion(
             name=name,
-            post_count=post_count if isinstance(post_count, int) else 0
+            post_count=post_count if isinstance(post_count, int) else None
         )
 
 

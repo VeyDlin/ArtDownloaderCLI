@@ -564,15 +564,7 @@ Toast:ansi {
 .cell.length { width: 8; }
 .cell.weight { width: 10; }
 .cell.status { width: 1fr; min-width: 20; }
-.cell.actions { width: 19; }
-
-.row-info {
-    width: 8;
-}
-
-.row-open {
-    width: 7;
-}
+.cell.actions { width: 18; }
 
 .row-details {
     height: auto;

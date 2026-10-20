@@ -6,6 +6,7 @@ from textual.message import Message
 from textual.timer import Timer
 from textual.widgets import Input, Label, OptionList, ProgressBar, Rule, Static
 from rich.markup import escape
+from ArtDownloader.Animation import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS
 from ArtDownloader.Api.Factory import create_source
 from ArtDownloader.Api.Source import Source
 from ArtDownloader.Api.Sites import Site, SiteDefinition, definition_for
@@ -66,11 +67,6 @@ RESERVED_NAMES: frozenset[str] = frozenset({
 })
 # A known total keeps an idle bar empty instead of running the 'unknown' animation.
 IDLE_TOTAL: int = 100
-
-# ✳ (U+2733) is deliberately absent: it is an emoji and renders as a green
-# tile in Windows Terminal. ✷ takes its place in the cycle.
-SPINNER_FRAMES: tuple[str, ...] = ('✻', '✽', '✶', '✷', '✢', '·', '✢', '✷', '✶', '✽')
-SPINNER_INTERVAL_SECONDS: float = 0.12
 
 # Tab badges. Text glyphs only: ⏸ / ⬇ render as colour emoji in Windows Terminal.
 BADGE_RUNNING: str = '↓'
