@@ -1,0 +1,211 @@
+from rich.markup import escape
+from textual.app import App, ComposeResult
+from textual.binding import Binding
+from textual.containers import Horizontal
+from textual.timer import Timer
+from textual.widgets import ContentSwitcher, Static
+from ArtDownloader.Api.Sites import Site
+from ArtDownloader.Auth.CredentialStore import CredentialStore
+from ArtDownloader.Config import AppConfig
+from ArtDownloader.Animation import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS
+from ArtDownloader.Tui.SitePane import AccountView, SitePane
+from ArtDownloader.Tui.Themes import SOURCE_THEMES
+from ArtDownloader.Tui.Navigation import ARROW_BINDINGS, move_focus
+from ArtDownloader.Tui.SettingsScreen import SettingsScreen
+from ArtDownloader.Tui.Sites import site_title
+from ArtDownloader.Tui.Widgets import Action, SiteTab
+from ArtDownloader.TerminalTitle import APP_NAME, DownloadState, TerminalTitle, TerminalWindow
+
+
+TAB_PREFIX: str = 'tab-'
+PANE_PREFIX: str = 'pane-'
+
+class ArtDownloaderApp(App[None]):
+    TITLE = APP_NAME
+    CSS_PATH = 'App.tcss'
+    # Tab/Shift+Tab walk every control; the arrows move focus spatially: ↑/↓ to
+    # the row above/below, ←/→ along the row. Widgets that need an arrow for
+    # themselves (text inputs, an open suggestion list) handle it first.
+    BINDINGS = [Binding('ctrl+q', 'quit', 'Quit', priority=True), *ARROW_BINDINGS]
+
+
+    def __init__(self, config: AppConfig) -> None:
+        # ansi_color lets the stylesheet use ansi_default: the terminal's own
+        # background instead of a painted one.
+        super().__init__(ansi_color=True)
+        self.config: AppConfig = config
+        self.token_store: CredentialStore = CredentialStore(config.session_path)
+        self.selected_site: Site = next(iter(Site))
+        for theme in SOURCE_THEMES.values():
+            self.register_theme(theme)
+        self.theme = SOURCE_THEMES[self.selected_site].name
+        self.account_spinner: Timer | None = None
+        self.account_frame: int = 0
+        self.terminal_window: TerminalWindow | None = None
+        self.title_animation: TerminalTitle | None = None
+        self.title_timer: Timer | None = None
+
+
+    def compose(self) -> ComposeResult:
+        # A hand-built top bar: site tabs, account status and settings are all
+        # plain focusable actions on one row, so the arrows walk along it and
+        # Enter/Space picks the focused one (arrows never switch the page).
+        first = self.selected_site
+        with Horizontal(id='topbar'):
+            for site in Site:
+                tab = SiteTab(site_title(site), id=f'{TAB_PREFIX}{site.value}', classes='site-tab')
+                tab.current = site is first
+                yield tab
+            yield Static('', classes='fill')
+            yield Static('', id='account-note')
+            yield Action(f'checking sign-in [$accent]{SPINNER_FRAMES[0]}[/]', id='account', disabled=True)
+            yield Action('settings', id='settings')
+
+        with ContentSwitcher(initial=f'{PANE_PREFIX}{first.value}', id='panes'):
+            for site in Site:
+                yield SitePane(site, self.config, self.token_store, id=f'{PANE_PREFIX}{site.value}')
+
+
+    def on_mount(self) -> None:
+        # Start where the work starts: the search field, not the first tab.
+        self.active_pane().query_one('#query').focus()
+        self.terminal_window = TerminalWindow(enabled=not self.is_headless)
+        self.title_animation = TerminalTitle(self.terminal_window.write)
+        self.update_terminal_title()
+        self.title_timer = self.set_interval(self.title_animation.interval, self.update_terminal_title)
+
+
+    def on_unmount(self) -> None:
+        if self.title_timer is not None:
+            self.title_timer.stop()
+        if self.terminal_window is not None:
+            self.terminal_window.close()
+
+
+    def update_terminal_title(self) -> None:
+        if self.title_animation is None:
+            return
+        states: list[DownloadState] = [
+            DownloadState(
+                site_title(pane.site),
+                saved=pane.saved_count,
+                paused=pane.control is not None and pane.control.is_paused,
+                stopping=pane.control is not None and pane.control.is_stopped
+            )
+            for pane in self.query(SitePane) if pane.running
+        ]
+        self.title_animation.update(states, selected_source=site_title(self.selected_site))
+
+
+    def pane_for(self, site: Site) -> SitePane:
+        return self.query_one(f'#{PANE_PREFIX}{site.value}', SitePane)
+
+
+    def active_pane(self) -> SitePane:
+        return self.pane_for(self.selected_site)
+
+
+    def show_site(self, site: Site) -> None:
+        self.selected_site = site
+        self.theme = SOURCE_THEMES[site].name
+        self.query_one('#panes', ContentSwitcher).current = f'{PANE_PREFIX}{site.value}'
+        for tab in self.query(SiteTab):
+            tab.current = tab.id == f'{TAB_PREFIX}{site.value}'
+
+        self.refresh_account()
+        self.update_terminal_title()
+
+
+    def on_action_pressed(self, event: Action.Pressed) -> None:
+        action_id = event.action.id or ''
+        if action_id.startswith(TAB_PREFIX):
+            self.show_site(Site(action_id.removeprefix(TAB_PREFIX)))
+        elif action_id == 'account':
+            self.active_pane().open_account()
+        elif event.action.id == 'settings':
+            self.open_settings()
+
+
+    def open_settings(self) -> None:
+        pane = self.active_pane()
+        self.push_screen(SettingsScreen(self.config, pane.site), lambda saved: self.settings_closed(pane, saved))
+
+
+    def settings_closed(self, pane: SitePane, saved: bool | None) -> None:
+        if not saved:
+            return
+
+        pane.apply_settings()
+
+        self.notify('Settings saved · downloads already running keep their old settings')
+
+
+    def on_site_pane_account_changed(self, message: SitePane.AccountChanged) -> None:
+        self.refresh_account()
+
+
+    def on_site_pane_state_changed(self, message: SitePane.StateChanged) -> None:
+        """Badges the tab, so a background tab's download stays visible."""
+        tab = self.query_one(f'#{TAB_PREFIX}{message.site.value}', SiteTab)
+        title = site_title(message.site)
+        tab.label = f'{title} {message.badge}' if message.badge else title
+        self.refresh_account()
+        self.update_terminal_title()
+
+
+    def refresh_account(self) -> None:
+        """Shows the active tab's sign-in state in the top bar.
+
+        | state            | shown                             | click           |
+        | checking         | checking sign-in ✻ (inert)        | —               |
+        | signed in        | Fangog ●                          | sign-out menu   |
+        | signed out       | not signed in · sign in           | sign-in dialog  |
+        | never signed in  | sign in                           | sign-in dialog  |
+        | error            | sign-in error ✕                   | dialog + reason |
+
+        Icons trail the text: the bar is right-aligned, so a trailing icon stays
+        put while only the text changes length.
+        """
+        pane = self.active_pane()
+        view = pane.account_view()
+        account = self.query_one('#account', Action)
+        note = self.query_one('#account-note', Static)
+        note.display = view in (AccountView.SIGNED_IN, AccountView.SIGNED_OUT)
+        note.update('[dim]signed in as[/]' if view is AccountView.SIGNED_IN else '[dim]not signed in ·[/]')
+        account.disabled = view is AccountView.CHECKING or pane.running
+
+        if view is AccountView.CHECKING:
+            account.set_tone('')
+            account.label = f'checking sign-in [$accent]{SPINNER_FRAMES[self.account_frame]}[/]'
+            if self.account_spinner is None:
+                self.account_spinner = self.set_interval(SPINNER_INTERVAL_SECONDS, self.tick_account)
+            return
+
+        self.stop_account_spinner()
+
+        if view is AccountView.SIGNED_IN:
+            account.set_tone('success')
+            account.label = f'{escape(pane.username())} ●'
+        elif view is AccountView.ERROR:
+            account.set_tone('error')
+            account.label = 'sign-in error ✕'
+        else:
+            account.set_tone('accent')
+            account.label = 'sign in'
+
+
+    def tick_account(self) -> None:
+        self.account_frame = (self.account_frame + 1) % len(SPINNER_FRAMES)
+        self.refresh_account()
+
+
+    def stop_account_spinner(self) -> None:
+        if self.account_spinner is None:
+            return
+
+        self.account_spinner.stop()
+        self.account_spinner = None
+
+
+    def action_focus_toward(self, direction: str) -> None:
+        move_focus(self.screen, direction)
