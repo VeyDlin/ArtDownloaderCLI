@@ -7,6 +7,7 @@ from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
 from textual.screen import ModalScreen
+from textual.validation import Integer
 from textual.widgets import Input, Label, OptionList, Rule, Static
 from rich.markup import escape
 from ArtDownloader.Api.Source import Source
@@ -272,7 +273,10 @@ class FiltersScreen(ModalScreen[SearchFilters | None], ArrowNavigation):
             yield Label(caption, classes='caption')
             yield Input(
                 value=str(value) if value else '', placeholder='any',
-                type='integer', id=field_id, compact=True, classes='number'
+                restrict=r'[0-9]*',
+                validators=Integer(minimum=0, maximum=999999999),
+                valid_empty=True, max_length=9,
+                id=field_id, compact=True, classes='number'
             )
             yield Static(f'[dim]{hint}[/]', classes='unit')
 

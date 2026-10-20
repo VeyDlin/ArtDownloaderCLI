@@ -36,7 +36,6 @@ class SiteDefinition:
     auth_kind: AuthKind
     filters: FilterSupport
     requires_auth: bool = False
-    account_url: str = ''
 
 
 SANKAKU_FILTERS: FilterSupport = FilterSupport(
@@ -67,8 +66,7 @@ SITE_DEFINITIONS: dict[Site, SiteDefinition] = {
         'Rule34',
         AuthKind.API_KEY,
         RULE34_FILTERS,
-        requires_auth=True,
-        account_url='https://rule34.xxx/index.php?page=account&s=options'
+        requires_auth=True
     )
 }
 

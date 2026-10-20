@@ -8,7 +8,7 @@ from textual.widgets import Input, Label, OptionList, ProgressBar, Rule, Static
 from rich.markup import escape
 from ArtDownloader.Api.Factory import create_source
 from ArtDownloader.Api.Source import Source
-from ArtDownloader.Api.Sites import AuthKind, Site, SiteDefinition, definition_for
+from ArtDownloader.Api.Sites import Site, SiteDefinition, definition_for
 from ArtDownloader.Api.Filters import SearchFilters, count_operators
 from ArtDownloader.Api.Queries import build_query
 from ArtDownloader.Api.Models import MediaItem, SessionCheck, SessionStatus
@@ -180,9 +180,6 @@ class SitePane(Vertical):
         menu = SuggestionMenu(id='tag-menu')
 
         with Vertical(classes='form'):
-            with Horizontal(id='connection-hint'):
-                yield Static('Connect your Rule34 account to search and download.', classes='fill')
-                yield Action('set up API key', 'accent', id='connect')
             # The menu hangs directly under the query, so both share one group
             # and the row gap goes below the pair. The filter summary is always
             # there (showing 'no filters' when empty), so filters never shift
@@ -261,8 +258,6 @@ class SitePane(Vertical):
             self.toggle_pause()
         elif action_id == 'stop':
             self.stop_download()
-        elif action_id == 'connect':
-            self.open_account()
 
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -461,10 +456,7 @@ class SitePane(Vertical):
             return
 
         if self.is_signed_in():
-            self.app.push_screen(
-                AccountMenu('disconnect' if self.definition.auth_kind is AuthKind.API_KEY else 'sign out'),
-                self.account_menu_closed
-            )
+            self.app.push_screen(AccountMenu(), self.account_menu_closed)
             return
 
         screen = AuthScreen(self.api, error=self.auth_error or '', can_retry=self.auth_retryable)
@@ -644,10 +636,6 @@ class SitePane(Vertical):
         start = self.query_one('#start', Action)
         start.display = not self.running
         start.disabled = self.checking
-        needs_connection: bool = self.definition.requires_auth and not self.is_signed_in()
-        start.label = 'connect to start' if needs_connection else '▶ start'
-        self.query_one('#connection-hint').display = needs_connection
-        self.query_one('#connect').disabled = self.checking
 
         pause = self.query_one('#pause', Action)
         pause.display = self.running and not stopping

@@ -17,16 +17,11 @@ class AccountMenu(ModalScreen[bool], ArrowNavigation):
     BINDINGS = [Binding('escape', 'close', 'Close')]
 
 
-    def __init__(self, disconnect_label: str = 'sign out') -> None:
-        super().__init__()
-        self.disconnect_label: str = disconnect_label
-
-
     def compose(self) -> ComposeResult:
         # Who is signed in is already on the status the user just clicked, so
         # the menu holds only the action.
         with Vertical(id='account-menu'):
-            yield Action(self.disconnect_label, 'error', id='sign-out')
+            yield Action('sign out', 'error', id='sign-out')
 
 
     def on_mount(self) -> None:

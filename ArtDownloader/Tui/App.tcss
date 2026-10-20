@@ -359,36 +359,6 @@ AuthScreen {
     color: $text-muted;
 }
 
-#dialog.key-dialog {
-    width: 80;
-}
-
-#auth-guide {
-    height: auto;
-    margin: 1 0;
-    padding: 0 1;
-}
-
-#account-settings-url {
-    display: none;
-    height: auto;
-    padding: 0 1;
-    margin-bottom: 1;
-    color: $text-muted;
-}
-
-#connection-hint {
-    height: auto;
-    min-height: 1;
-    margin-bottom: 1;
-    padding: 0 1;
-    color: $text-muted;
-}
-
-#connection-hint Static {
-    height: auto;
-}
-
 #dialog .message {
     height: auto;
     min-height: 1;

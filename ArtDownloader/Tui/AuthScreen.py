@@ -12,7 +12,6 @@ from ArtDownloader.Api.Errors import ApiError
 from ArtDownloader.Tui.Navigation import ArrowNavigation
 from ArtDownloader.Tui.Sites import site_title
 from ArtDownloader.Tui.Widgets import Action
-import webbrowser
 
 
 class AuthResult(Enum):
@@ -42,26 +41,12 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
 
     def compose(self) -> ComposeResult:
         key_auth: bool = self.definition.auth_kind is AuthKind.API_KEY
-        with Vertical(id='dialog', classes='key-dialog' if key_auth else ''):
+        with Vertical(id='dialog'):
             with Horizontal(classes='line'):
-                action: str = 'connect' if key_auth else 'sign in'
-                yield Static(f'[b]{site_title(self.api.site)}[/] · {action}', classes='fill')
+                yield Static(f'[b]{site_title(self.api.site)}[/] · sign in', classes='fill')
                 yield Action('esc', id='close')
 
             yield Rule()
-
-            if key_auth:
-                yield Static(
-                    'An [b]API key[/] is a private access code for this app.\n\n'
-                    '1. Open account settings below and sign in.\n'
-                    '2. Under [b]API Access Credentials[/], select [b]Generate New Key?[/] '
-                    'and [b]Save[/] if you do not have a key yet.\n'
-                    '3. Paste your [b]User ID[/] and [b]API key[/] below.',
-                    id='auth-guide'
-                )
-                with Horizontal(classes='field'):
-                    yield Action('open account settings ↗', 'accent', id='open-account-settings')
-                yield Static(self.definition.account_url, id='account-settings-url', markup=False)
 
             with Horizontal(classes='field'):
                 yield Label('User ID' if key_auth else 'login', classes='caption')
@@ -80,8 +65,10 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
                 yield Action('show', id='reveal')
 
             yield Static(
-                'Your key is saved locally in .config/session.json. Keep it private. '
-                'Request limits are handled automatically.'
+                'An API key is a private access code for this app.\n'
+                'In Rule34 account settings → API Access Credentials, '
+                'generate a key and Save. Copy User ID and API key here.\n'
+                'The key is saved locally; keep it private.'
                 if key_auth else 'The password is only exchanged for a session token; it is never saved.',
                 id='auth-hint'
             )
@@ -92,7 +79,7 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
                 yield Static('', id='auth-error', classes='fill message')
                 if self.can_retry:
                     yield Action('↻ retry check', id='retry')
-                yield Action('❯ connect' if key_auth else '❯ sign in', 'accent', id='sign-in')
+                yield Action('❯ sign in', 'accent', id='sign-in')
 
 
     def on_mount(self) -> None:
@@ -109,8 +96,6 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
             self.toggle_reveal()
         elif action_id == 'retry':
             self.dismiss(AuthResult.RETRY)
-        elif action_id == 'open-account-settings':
-            self.open_account_settings()
         elif action_id == 'close':
             self.action_close()
 
@@ -126,21 +111,6 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
     def action_close(self) -> None:
         if not self.busy:
             self.dismiss(AuthResult.CLOSED)
-
-
-    @work(thread=True, exit_on_error=False)
-    def open_account_settings(self) -> None:
-        try:
-            opened: bool = webbrowser.open(self.definition.account_url)
-        except webbrowser.Error:
-            opened = False
-        if not opened:
-            self.app.call_from_thread(self.show_account_url)
-
-
-    def show_account_url(self) -> None:
-        self.query_one('#account-settings-url').display = True
-        self.show_error('Open the account settings URL above in your browser')
 
 
     def toggle_reveal(self) -> None:
@@ -197,10 +167,7 @@ class AuthScreen(ModalScreen[AuthResult], ArrowNavigation):
         self.busy = busy
         sign_in = self.query_one('#sign-in', Action)
         sign_in.disabled = busy
-        key_auth: bool = self.definition.auth_kind is AuthKind.API_KEY
-        sign_in.label = ('checking key…' if key_auth else 'signing in…') if busy else (
-            '❯ connect' if key_auth else '❯ sign in'
-        )
+        sign_in.label = 'signing in…' if busy else '❯ sign in'
         for selector in ('#username', '#password', '#close'):
             self.query_one(selector).disabled = busy
 

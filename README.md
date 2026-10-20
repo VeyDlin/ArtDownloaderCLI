@@ -9,7 +9,7 @@ Chan and Idol work anonymously. With a Sankaku account you can also:
 
 > **About the 50-page limit:** Sankaku itself stops every search after 50 pages unless the account has a paid subscription. This limit comes from Sankaku's servers, not from this app — the app downloads as far as Sankaku lets your account go.
 
-**Rule34 requires a User ID and API key.** The application includes a short setup guide and opens the account settings page for you. See [Connecting Rule34](#connecting-rule34).
+**Rule34 requires a User ID and API key.** Use the existing sign-in form; its hint explains where to obtain the key. See [Connecting Rule34](#connecting-rule34).
 
 ## Features
 - **Independent sources** – Each site has its own tab, account, settings and download folder; several sites can download at the same time
@@ -59,7 +59,7 @@ Run `start.bat` — it is a polyglot script: double-click it on Windows, or run 
 
 ## Getting started
 1. Pick **Chan**, **Idol** or **Rule34**. Each tab checks its saved connection on start
-2. For Sankaku, click **sign in** or browse anonymously. For Rule34, click **set up API key**
+2. Click **sign in** in the top bar. Sankaku also supports anonymous browsing; Rule34 requires a key
 3. Enter a search query (matching tags drop down as you type), optionally set **filters**, and press **▶ start**
 4. Enjoy your downloads!
 
@@ -74,16 +74,17 @@ extension, and **tags** picks the tag files to write.
 An **API key** is a private access code that lets an application use your account.
 It is different from your password.
 
-1. In the Rule34 tab, click **set up API key**.
-2. Click **open account settings**, then sign in in your browser. Complete a browser
+1. In the Rule34 tab, click **sign in** in the top bar.
+2. Open [Rule34 account settings](https://rule34.xxx/index.php?page=account&s=options),
+   then sign in in your browser. Complete a browser
    verification if the site requests one.
 3. Find **API Access Credentials**. If you do not have a key, select **Generate New
    Key?**, click **Save**, and return to that section.
 4. Copy **User ID** and **API key** into the application's fields, then click
-   **connect**. The application checks the key before saving it.
+   **sign in**. The application checks the key before saving it.
 
 Credentials are stored locally in `.config/session.json`, separately from settings.
-Do not share that file. **disconnect** removes the saved key and remembers only
+Do not share that file. **sign out** removes the saved key and remembers only
 the User ID. A temporary connection error keeps the key and offers **retry check**.
 
 Rule34 API requests are paced automatically across all workers. On a rate-limit

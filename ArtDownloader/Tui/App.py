@@ -5,7 +5,7 @@ from textual.containers import Horizontal
 from textual.theme import Theme
 from textual.timer import Timer
 from textual.widgets import ContentSwitcher, Static
-from ArtDownloader.Api.Sites import AuthKind, Site
+from ArtDownloader.Api.Sites import Site
 from ArtDownloader.Auth.CredentialStore import CredentialStore
 from ArtDownloader.Config import AppConfig
 from ArtDownloader.Tui.SitePane import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS, AccountView, SitePane
@@ -186,16 +186,13 @@ class ArtDownloaderApp(App[None]):
         view = pane.account_view()
         account = self.query_one('#account', Action)
         note = self.query_one('#account-note', Static)
-        key_auth: bool = pane.definition.auth_kind is AuthKind.API_KEY
-
-        note.display = not key_auth and view in (AccountView.SIGNED_IN, AccountView.SIGNED_OUT)
+        note.display = view in (AccountView.SIGNED_IN, AccountView.SIGNED_OUT)
         note.update('[dim]signed in as[/]' if view is AccountView.SIGNED_IN else '[dim]not signed in ·[/]')
         account.disabled = view is AccountView.CHECKING or pane.running
 
         if view is AccountView.CHECKING:
             account.set_tone('')
-            action: str = 'checking key' if key_auth else 'checking sign-in'
-            account.label = f'{action} [$accent]{SPINNER_FRAMES[self.account_frame]}[/]'
+            account.label = f'checking sign-in [$accent]{SPINNER_FRAMES[self.account_frame]}[/]'
             if self.account_spinner is None:
                 self.account_spinner = self.set_interval(SPINNER_INTERVAL_SECONDS, self.tick_account)
             return
@@ -204,13 +201,13 @@ class ArtDownloaderApp(App[None]):
 
         if view is AccountView.SIGNED_IN:
             account.set_tone('success')
-            account.label = f'connected · {escape(pane.username())} ●' if key_auth else f'{escape(pane.username())} ●'
+            account.label = f'{escape(pane.username())} ●'
         elif view is AccountView.ERROR:
             account.set_tone('error')
-            account.label = 'connection error ✕' if key_auth else 'sign-in error ✕'
+            account.label = 'sign-in error ✕'
         else:
             account.set_tone('accent')
-            account.label = 'connect' if key_auth else 'sign in'
+            account.label = 'sign in'
 
 
     def tick_account(self) -> None:
