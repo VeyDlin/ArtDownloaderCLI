@@ -67,9 +67,14 @@ FiltersScreen {
 
 /* Filter hints ('stars and up', 'video only') sit at the far right. */
 #filters-dialog .unit {
-    width: 1fr;
+    width: auto;
     padding: 0 1;
     text-align: right;
+}
+
+#filters-dialog .field {
+    height: auto;
+    min-height: 1;
 }
 
 #settings-dialog .hint-row {
@@ -121,9 +126,39 @@ AccountMenu {
     pointer: default;
 }
 
-/* Top bar tabs: the current page is accented; focus/hover fill like any action. */
 .site-tab {
     margin-right: 1;
+}
+
+/* Source identity stays fixed; $accent belongs to the active page. */
+#tab-chan {
+    color: $source-chan;
+}
+
+#tab-idol {
+    color: $source-idol;
+}
+
+#tab-rule34 {
+    color: $source-rule34;
+}
+
+#tab-chan:hover,
+#tab-chan:focus {
+    background: $source-chan;
+    color: $background;
+}
+
+#tab-idol:hover,
+#tab-idol:focus {
+    background: $source-idol;
+    color: $background;
+}
+
+#tab-rule34:hover,
+#tab-rule34:focus {
+    background: $source-rule34;
+    color: $background;
 }
 
 /* width: 100%, not the default 1fr: in a vertical layout 1fr is cut by the
@@ -239,9 +274,20 @@ Input > .input--suggestion {
     height: 1;
 }
 
+#sign-in-required {
+    height: 1;
+    align: center middle;
+}
+
+.sign-in-prompt {
+    width: auto;
+    height: 1;
+    color: $text-muted;
+}
+
 /* Room for the widest pair, '▶ resume ■ stop'. */
 #player {
-    width: 20;
+    width: 24;
     height: 1;
 }
 
@@ -263,6 +309,11 @@ Action.-invalid {
     height: auto;
     padding: 0 1;
     margin-bottom: 1;
+}
+
+#activity.-requires-sign-in {
+    height: 1fr;
+    align: center middle;
 }
 
 #status,
@@ -357,6 +408,34 @@ AuthScreen {
     margin-top: 1;
     padding: 0 1;
     color: $text-muted;
+}
+
+#auth-settings-step,
+.auth-step {
+    height: 1;
+    padding: 0 1;
+}
+
+.auth-step-text {
+    width: auto;
+    height: 1;
+}
+
+#auth-steps {
+    height: auto;
+    padding: 0 1;
+}
+
+#credentials {
+    height: 4;
+    margin: 1 1 0 1;
+    padding: 0 1;
+    border: none;
+    background: $foreground 7%;
+}
+
+#credentials:focus {
+    background: $foreground 13%;
 }
 
 #dialog .message {
@@ -478,7 +557,7 @@ Toast:ansi {
 .cell.length { width: 8; }
 .cell.weight { width: 10; }
 .cell.status { width: 1fr; min-width: 20; }
-.cell.actions { width: 15; }
+.cell.actions { width: 19; }
 
 .row-info {
     width: 8;

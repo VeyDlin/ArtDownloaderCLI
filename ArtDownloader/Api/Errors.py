@@ -4,3 +4,7 @@ class ApiError(Exception):
 
 class AuthError(ApiError):
     """Credentials were rejected, or the session could not be restored."""
+
+
+class WebsiteSignInRequired(AuthError):
+    """Copied account settings belong to a guest website session."""

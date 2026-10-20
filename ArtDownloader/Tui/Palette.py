@@ -6,6 +6,7 @@
 # yellow so paused/skipped states never read as the accent.
 ACCENT: str = '#D99F59'
 SECONDARY: str = '#8C8C8C'
+HIGHLIGHT: str = '#9CBBD6'
 SUCCESS: str = '#8FBF7F'
 WARNING: str = '#E5D77B'
 ERROR: str = '#E06C75'

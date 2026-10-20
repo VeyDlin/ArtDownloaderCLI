@@ -2,14 +2,13 @@ from rich.markup import escape
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal
-from textual.theme import Theme
 from textual.timer import Timer
 from textual.widgets import ContentSwitcher, Static
 from ArtDownloader.Api.Sites import Site
 from ArtDownloader.Auth.CredentialStore import CredentialStore
 from ArtDownloader.Config import AppConfig
 from ArtDownloader.Tui.SitePane import SPINNER_FRAMES, SPINNER_INTERVAL_SECONDS, AccountView, SitePane
-from ArtDownloader.Tui import Palette
+from ArtDownloader.Tui.Themes import SOURCE_THEMES
 from ArtDownloader.Tui.Navigation import ARROW_BINDINGS, move_focus
 from ArtDownloader.Tui.SettingsScreen import SettingsScreen
 from ArtDownloader.Tui.Sites import site_title
@@ -19,24 +18,6 @@ from ArtDownloader.TerminalTitle import APP_NAME, DownloadState, TerminalTitle, 
 
 TAB_PREFIX: str = 'tab-'
 PANE_PREFIX: str = 'pane-'
-
-# The background is the terminal's own (see App.tcss), so only the foreground
-# colours matter here; they live in Palette.
-THEME: Theme = Theme(
-    name='sankaku',
-    primary=Palette.ACCENT,
-    accent=Palette.ACCENT,
-    secondary=Palette.SECONDARY,
-    success=Palette.SUCCESS,
-    warning=Palette.WARNING,
-    error=Palette.ERROR,
-    foreground=Palette.FOREGROUND,
-    background=Palette.BACKGROUND,
-    surface=Palette.SURFACE,
-    panel=Palette.PANEL,
-    dark=True
-)
-
 
 class ArtDownloaderApp(App[None]):
     TITLE = APP_NAME
@@ -53,8 +34,9 @@ class ArtDownloaderApp(App[None]):
         super().__init__(ansi_color=True)
         self.config: AppConfig = config
         self.token_store: CredentialStore = CredentialStore(config.session_path)
-        self.register_theme(THEME)
-        self.theme = THEME.name
+        for theme in SOURCE_THEMES.values():
+            self.register_theme(theme)
+        self.theme = SOURCE_THEMES[next(iter(Site))].name
         self.account_spinner: Timer | None = None
         self.account_frame: int = 0
         self.terminal_window: TerminalWindow | None = None
@@ -125,6 +107,7 @@ class ArtDownloaderApp(App[None]):
 
 
     def show_site(self, site: Site) -> None:
+        self.theme = SOURCE_THEMES[site].name
         self.query_one('#panes', ContentSwitcher).current = f'{PANE_PREFIX}{site.value}'
         for tab in self.query(SiteTab):
             tab.current = tab.id == f'{TAB_PREFIX}{site.value}'

@@ -205,7 +205,11 @@ class SitePane(Vertical):
 
             with Horizontal(classes='field'):
                 yield Label('limit', classes='caption')
-                yield Input(placeholder='no limit · max number of media files', type='integer', id='limit', compact=True)
+                yield Input(
+                    placeholder='no limit · max number of media files',
+                    type='integer', valid_empty=True, restrict=r'[0-9]*',
+                    id='limit', compact=True
+                )
 
             with Horizontal(classes='field'):
                 yield Label('options', classes='caption')
@@ -218,6 +222,10 @@ class SitePane(Vertical):
         # stop while running, then what is happening. The controls' box has a
         # fixed width, so swapping them never moves the status text.
         with Vertical(id='activity'):
+            with Horizontal(id='sign-in-required'):
+                yield Static('You must', classes='sign-in-prompt')
+                yield Action('sign in', 'accent', id='required-sign-in')
+                yield Static(f'to download from {site_title(self.site)}.', classes='sign-in-prompt')
             with Horizontal(id='status-line'):
                 with Horizontal(id='player'):
                     yield Action('▶ start', 'accent', id='start', disabled=True)
@@ -258,6 +266,8 @@ class SitePane(Vertical):
             self.toggle_pause()
         elif action_id == 'stop':
             self.stop_download()
+        elif action_id == 'required-sign-in':
+            self.open_account()
 
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -632,9 +642,17 @@ class SitePane(Vertical):
     def refresh_controls(self) -> None:
         paused = self.control is not None and self.control.is_paused
         stopping = self.control is not None and self.control.is_stopped
+        needs_sign_in: bool = (
+            self.definition.requires_auth and self.account_view() is not AccountView.SIGNED_IN and not self.running
+        )
+        self.query_one('.form').disabled = needs_sign_in
+        self.query_one('#activity').set_class(needs_sign_in, '-requires-sign-in')
+        self.query_one('#sign-in-required').display = needs_sign_in
+        self.query_one('#required-sign-in').disabled = self.checking
+        self.query_one('#status-line').display = not needs_sign_in
 
         start = self.query_one('#start', Action)
-        start.display = not self.running
+        start.display = not self.running and not needs_sign_in
         start.disabled = self.checking
 
         pause = self.query_one('#pause', Action)

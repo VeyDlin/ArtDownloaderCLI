@@ -2,10 +2,10 @@ from enum import Enum
 from textual import events
 from textual.app import ComposeResult
 from textual.binding import Binding
-from textual.containers import Horizontal, Vertical
 from textual.message import Message
 from textual.reactive import reactive
-from textual.widgets import ProgressBar, Static
+from textual.widgets import Static
+from ArtDownloader.Tui.Layout import WrappedRow
 
 
 class Action(Static, can_focus=True):
@@ -23,6 +23,7 @@ class Action(Static, can_focus=True):
         width: auto;
         height: 1;
         padding: 0 1;
+        margin: 0 1;
         color: $text-muted;
         pointer: pointer;
     }
@@ -187,7 +188,7 @@ class ChoiceOption(Action):
 
     DEFAULT_CSS = '''
     ChoiceOption {
-        margin-right: 1;
+        margin: 0 1;
     }
 
     ChoiceOption.-selected {
@@ -213,20 +214,11 @@ class ChoiceOption(Action):
         self.set_class(selected, '-selected')
 
 
-class ChoiceRow(Horizontal):
+class ChoiceRow(WrappedRow):
     """Pick one of several options, laid out in a row (a segmented control).
 
     Arrows move focus between the options; Enter/Space or a click picks one.
     """
-
-    DEFAULT_CSS = '''
-    ChoiceRow {
-        width: auto;
-        height: 1;
-        margin-right: 2;
-    }
-    '''
-
 
     class Changed(Message):
         def __init__(self, row: 'ChoiceRow', value: object) -> None:
@@ -289,7 +281,7 @@ class CycleOption(Action):
 
     DEFAULT_CSS = '''
     CycleOption {
-        margin-right: 1;
+        margin: 0 1;
     }
 
     CycleOption.-only {
@@ -329,17 +321,8 @@ class CycleOption(Action):
         self.set_class(mark is Mark.NOT, '-not')
 
 
-class CycleRow(Horizontal):
+class CycleRow(WrappedRow):
     """Options that each cycle any → only → not; for filters that can be negated."""
-
-    DEFAULT_CSS = '''
-    CycleRow {
-        width: auto;
-        height: 1;
-        margin-right: 2;
-    }
-    '''
-
 
     class Changed(Message):
         def __init__(self, row: 'CycleRow') -> None:
@@ -398,6 +381,7 @@ class Toggle(Static, can_focus=True):
         width: auto;
         height: 1;
         padding: 0 1;
+        margin: 0 1;
         color: $text-muted;
         pointer: pointer;
     }

@@ -25,7 +25,6 @@ def build_query(site: Site, query: str, filters: SearchFilters) -> str:
             raise ValueError('Use the size and star filters for Sankaku')
         return combine_query(query, filters)
 
-    # Reject accidental reuse of another site's state instead of ignoring it.
     supported: SearchFilters = SearchFilters(
         sort=filters.sort,
         only_ratings=filters.only_ratings,

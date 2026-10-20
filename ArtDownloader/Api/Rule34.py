@@ -4,8 +4,8 @@ from email.utils import parsedate_to_datetime
 from pathlib import Path
 from threading import Event
 from typing import Any
-from urllib.parse import urlparse
-from ArtDownloader.Api.Errors import ApiError, AuthError
+from urllib.parse import parse_qs, urlparse
+from ArtDownloader.Api.Errors import ApiError, AuthError, WebsiteSignInRequired
 from ArtDownloader.Api.Http import RateLimiter, SessionPool
 from ArtDownloader.Api.Models import MediaItem, SessionCheck, SessionStatus, TagSuggestion, TypedTag, text_of
 from ArtDownloader.Api.Sites import Site
@@ -68,13 +68,7 @@ class Rule34Api:
 
 
     def login(self, identifier: str, secret: str) -> str:
-        user_id: str = identifier.strip()
-        api_key: str = secret.strip()
-        if not user_id.isascii() or not user_id.isdigit() or int(user_id) <= 0:
-            raise AuthError('User ID must be the positive number from your account settings')
-        if not api_key or any(character.isspace() for character in api_key):
-            raise AuthError('Paste the API key from API Access Credentials')
-        credentials: ApiCredentials = ApiCredentials(user_id, api_key)
+        credentials: ApiCredentials = credentials_from_input(identifier, secret)
         self.verify_credentials(credentials)
         if self.credential_store is not None:
             try:
@@ -82,7 +76,7 @@ class Rule34Api:
             except OSError:
                 raise ApiError('Could not save the key locally; check folder permissions') from None
         self.credentials = credentials
-        return user_id
+        return credentials.user_id
 
 
     def logout(self) -> None:
@@ -282,6 +276,38 @@ class Rule34Api:
                     raise ApiError('Rule34 could not complete this request; check the search and retry')
                 return data
         raise ApiError('Rule34 is temporarily unavailable')
+
+
+def credentials_from_input(identifier: str, secret: str) -> ApiCredentials:
+    user_id: str = identifier.strip()
+    api_key: str = secret.strip()
+    if api_key.startswith(('&', 'api_key=', 'user_id=')):
+        api_key = ''.join(api_key.split())
+        try:
+            fields: dict[str, list[str]] = parse_qs(
+                api_key.lstrip('&'), keep_blank_values=True, strict_parsing=True, max_num_fields=2
+            )
+        except ValueError:
+            raise AuthError('Paste the complete API credentials containing api_key and user_id') from None
+        if set(fields) != {'api_key', 'user_id'} or any(len(values) != 1 for values in fields.values()):
+            raise AuthError('Paste the complete API credentials containing api_key and user_id')
+        user_id = fields['user_id'][0]
+        api_key = fields['api_key'][0]
+        if not api_key and user_id == '2':
+            raise WebsiteSignInRequired(
+                'It looks like you are not signed in on Rule34. '
+                'Sign in on the website, then open account settings again.'
+            )
+        if not api_key:
+            raise AuthError(
+                'The copied line contains no API key. In account settings, '
+                'choose Generate New Key? and Save, then copy the line again.'
+            )
+    if not user_id.isascii() or not user_id.isdigit() or int(user_id) <= 0:
+        raise AuthError('Copy the complete line from API Access Credentials, including user_id')
+    if not api_key or any(character.isspace() for character in api_key):
+        raise AuthError('Paste the API key from API Access Credentials')
+    return ApiCredentials(user_id, api_key)
 
 
 def retry_delay(header: str | None, attempt: int) -> float:

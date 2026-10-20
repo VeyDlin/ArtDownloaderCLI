@@ -9,7 +9,7 @@ Chan and Idol work anonymously. With a Sankaku account you can also:
 
 > **About the 50-page limit:** Sankaku itself stops every search after 50 pages unless the account has a paid subscription. This limit comes from Sankaku's servers, not from this app — the app downloads as far as Sankaku lets your account go.
 
-**Rule34 requires a User ID and API key.** Use the existing sign-in form; its hint explains where to obtain the key. See [Connecting Rule34](#connecting-rule34).
+**Rule34 requires sign-in before downloading.** The sign-in form guides you through copying your account's access credentials. See [Connecting Rule34](#connecting-rule34).
 
 ## Features
 - **Independent sources** – Each site has its own tab, account, settings and download folder; several sites can download at the same time
@@ -74,14 +74,21 @@ extension, and **tags** picks the tag files to write.
 An **API key** is a private access code that lets an application use your account.
 It is different from your password.
 
-1. In the Rule34 tab, click **sign in** in the top bar.
-2. Open [Rule34 account settings](https://rule34.xxx/index.php?page=account&s=options),
-   then sign in in your browser. Complete a browser
-   verification if the site requests one.
-3. Find **API Access Credentials**. If you do not have a key, select **Generate New
-   Key?**, click **Save**, and return to that section.
-4. Copy **User ID** and **API key** into the application's fields, then click
-   **sign in**. The application checks the key before saving it.
+1. In the Rule34 tab, click **sign in** in the center or top bar.
+2. If you are already signed in to Rule34 in your browser, continue to step 3.
+   Otherwise, use the form's **sign in** link and finish signing in on the website.
+3. Click **account settings** in the form. Find **API Access Credentials**.
+4. Copy the entire line beginning with `&api_key=` into the application's text
+   box, then click **continue**. There is no need to split the text into fields.
+
+If the copied line belongs to a guest session, the form directs you to sign in
+on the website and reopen settings. If your account has no key, the error
+explains how to use **Generate New Key?** and **Save** before copying again.
+An existing key can be reused.
+
+Download controls stay disabled until the credentials are verified. Rule34 uses
+a green page accent; Chan and Idol use orange. Each tab keeps its own source
+color when another page is active.
 
 Credentials are stored locally in `.config/session.json`, separately from settings.
 Do not share that file. **sign out** removes the saved key and remembers only
