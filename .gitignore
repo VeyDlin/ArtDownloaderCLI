@@ -8,3 +8,5 @@ build/
 dist/
 *.spec
 .mypy_cache/
+/docs/
+/tests/
